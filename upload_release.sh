@@ -18,14 +18,14 @@ echo "Downloading last release information"
 curl "$AUTH" "$GAPI/releases/latest" > "$LAST_RELEASE_JSON"
 
 echo "Removing old release asset"
-curl --fail -XDELETE "$AUTH" \
+curl -XDELETE "$AUTH" \
   "$GAPI/releases/assets/$(
       <"$LAST_RELEASE_JSON" \
       jq -r '.assets[]|select(.name == "stations-old.zip")|.id'
   )"
 
 echo "Renaming current version to old"
-curl --fail -XPATCH "$AUTH" \
+curl -XPATCH "$AUTH" \
   "$GAPI/releases/assets/$(
       <"$LAST_RELEASE_JSON" \
       jq -r '.assets[]|select(.name == "stations.zip")|.id'
