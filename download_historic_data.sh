@@ -2,8 +2,11 @@
 
 set -e
 
-wget -O stations.zip 'https://github.com/lovasoa/historique-velib-opendata/releases/download/latest/stations.zip'
+base="https://github.com/lovasoa/historique-velib-opendata/releases/download/latest"
+outfile=stations.zip
 
-unzip -q -o stations.zip -d stations
+wget -O $outfile "$base/stations.zip" || wget -O $outfile "$base/stations-old.zip"
 
-rm stations.zip
+unzip -q -o $outfile -d stations
+
+rm $outfile
