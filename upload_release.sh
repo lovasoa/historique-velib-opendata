@@ -7,21 +7,30 @@ then
   exit 1
 fi
 
-zip --junk-path -r stations.zip stations/*csv
+zip -q --junk-path -r stations.zip stations/*csv
 
 GAPI=https://api.github.com/repos/lovasoa/historique-velib-opendata
 AUTH="-HAuthorization: token $GITHUB_TOKEN"
 
 LAST_RELEASE_JSON=$(mktemp)
 
+echo "Downloading last release information"
 curl "$AUTH" "$GAPI/releases/latest" > "$LAST_RELEASE_JSON"
 
-PREVIOUS_ASSET=$(
-  <"$LAST_RELEASE_JSON" \
-  jq -r '.assets[]|select(.name == "stations.zip")|.id'
-)
+echo "Removing old release asset"
+curl --fail -XDELETE "$AUTH" \
+  "$GAPI/releases/assets/$(
+      <"$LAST_RELEASE_JSON" \
+      jq -r '.assets[]|select(.name == "stations-old.zip")|.id'
+  )"
 
-curl -XDELETE "$AUTH" "$GAPI/releases/assets/$PREVIOUS_ASSET"
+echo "Renaming current version to old"
+curl --fail -XPATCH "$AUTH" \
+  "$GAPI/releases/assets/$(
+      <"$LAST_RELEASE_JSON" \
+      jq -r '.assets[]|select(.name == "stations.zip")|.id'
+  )" \
+  --data-binary '{"name":"stations-old.zip","label":"Old version"}'
 
 UPLOAD_URL=$(
     < "$LAST_RELEASE_JSON" \
@@ -29,7 +38,8 @@ UPLOAD_URL=$(
     sed 's/{.*}//'
 )
 
-curl "$AUTH" \
+echo "Uploading new version"
+curl --fail "$AUTH" \
   -H "Content-Type: application/zip" \
   "$UPLOAD_URL?name=stations.zip" \
   --data-binary "@stations.zip"
