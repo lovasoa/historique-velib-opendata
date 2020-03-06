@@ -15,17 +15,17 @@ AUTH="-HAuthorization: token $GITHUB_TOKEN"
 LAST_RELEASE_JSON=$(mktemp)
 
 echo "Downloading last release information"
-curl "$AUTH" "$GAPI/releases/latest" > "$LAST_RELEASE_JSON"
+curl -sS "$AUTH" "$GAPI/releases/latest" > "$LAST_RELEASE_JSON"
 
 echo "Removing old release asset"
-curl -XDELETE "$AUTH" \
+curl -sS -XDELETE "$AUTH" \
   "$GAPI/releases/assets/$(
       <"$LAST_RELEASE_JSON" \
       jq -r '.assets[]|select(.name == "stations-old.zip")|.id'
   )"
 
 echo "Renaming current version to old"
-curl -XPATCH "$AUTH" \
+curl -sS -XPATCH "$AUTH" \
   "$GAPI/releases/assets/$(
       <"$LAST_RELEASE_JSON" \
       jq -r '.assets[]|select(.name == "stations.zip")|.id'
@@ -39,7 +39,7 @@ UPLOAD_URL=$(
 )
 
 echo "Uploading new version"
-curl --fail "$AUTH" \
+curl -sS --fail "$AUTH" \
   -H "Content-Type: application/zip" \
   "$UPLOAD_URL?name=stations.zip" \
   --data-binary "@stations.zip"
