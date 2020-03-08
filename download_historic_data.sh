@@ -2,11 +2,12 @@
 
 set -e
 
-base="https://github.com/lovasoa/historique-velib-opendata/releases/download/latest"
+base="https://api.github.com/repos/lovasoa/historique-velib-opendata/releases/latest"
+urls=$(curl "$base" | jq -r '.assets|sort_by(.updated_at)|reverse[]|.browser_download_url')
 outfile=stations.zip
-
-wget -nv -O $outfile "$base/stations.zip" || wget -nv -O $outfile "$base/stations-old.zip"
-
-unzip -q -o $outfile -d stations
-
-rm $outfile
+for url in $urls; do
+    wget -nv -O "$outfile" "$url" && \
+    unzip -q -o $outfile -d stations && \
+    rm $outfile && \
+    break || continue
+done
