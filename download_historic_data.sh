@@ -8,6 +8,7 @@ outfile=stations.zip
 for url in $urls; do
     wget -nv -O "$outfile" "$url" && \
     unzip -q -o $outfile -d stations && \
-    rm $outfile && \
     break || continue
 done
+
+rm $outfile
