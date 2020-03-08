@@ -2,8 +2,8 @@
 
 set -e
 
-bash ./download_historic_data.sh
+bash -x ./download_historic_data.sh
 
 python3 fetch_data.py
 
-bash ./upload_release.sh
+bash -x ./upload_release.sh
