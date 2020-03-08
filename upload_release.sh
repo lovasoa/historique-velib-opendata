@@ -24,7 +24,7 @@ UPLOAD_URL=$(
 )
 
 echo "Uploading new version"
-NEW_ASSET_ID = $(
+NEW_ASSET_ID=$(
   curl -sS --fail "$AUTH" \
     -H "Content-Type: application/zip" \
     "$UPLOAD_URL?name=stations-$(date -u +"%Y-%m-%dT%H%MZ").zip" \
