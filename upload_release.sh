@@ -36,10 +36,10 @@ echo "Removing old release asset"
 curl -sS -XDELETE "$AUTH" \
   "$GAPI/releases/assets/$(
       <"$LAST_RELEASE_JSON" \
-      jq -r '.assets|sort_by(.updated_at)|reverse[]|.id' | tail -n 1
+      jq -r '.assets[]|select(.name == "stations.zip")|.id'
   )"
 
 echo "Renaming asset file"
-curl -sS --fail -XPATCH "$AUTH" \
+curl -sS -XPATCH "$AUTH" \
   "$GAPI/releases/assets/$NEW_ASSET_ID" \
   --data-binary "{\"name\":\"stations.zip\",\"label\":\"Latest data per station as of $(date)\"}"
