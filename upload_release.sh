@@ -40,6 +40,6 @@ curl -sS -XDELETE "$AUTH" \
   )"
 
 echo "Renaming asset file"
-curl -sS -XPATCH "$AUTH" \
+curl -sS --fail -XPATCH "$AUTH" \
   "$GAPI/releases/assets/$NEW_ASSET_ID" \
   --data-binary "{\"name\":\"stations.zip\",\"label\":\"Latest data per station as of $(date)\"}"
