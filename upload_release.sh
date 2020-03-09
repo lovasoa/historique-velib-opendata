@@ -25,11 +25,13 @@ UPLOAD_URL=$(
 
 echo "Uploading new version"
 NEW_ASSET_ID=$(
-  curl -sS --fail "$AUTH" \
+  for i in $(seq 5); do
+    curl -sS --fail "$AUTH" \
     -H "Content-Type: application/zip" \
     "$UPLOAD_URL?name=stations-$(date -u +"%Y-%m-%dT%H%MZ").zip" \
-    --data-binary "@stations.zip" | 
-    jq -r '.id'
+    --data-binary "@stations.zip" \
+    && break || sleep 20;
+  done | jq -r '.id'
 )
 
 echo "Removing old release asset"
