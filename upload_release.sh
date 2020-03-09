@@ -36,7 +36,7 @@ echo "Removing old release asset"
 curl -sS --fail -XDELETE "$AUTH" \
   "$GAPI/releases/assets/$(
       <"$LAST_RELEASE_JSON" \
-      jq -r '.assets[]|select(.name == "stations.zip")|.id'
+      jq -r '.assets|sort_by(.updated_at)|reverse[]|.id' | tail -n 1
   )"
 
 echo "Renaming asset file"
