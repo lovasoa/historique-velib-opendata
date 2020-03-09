@@ -33,7 +33,7 @@ NEW_ASSET_ID=$(
 )
 
 echo "Removing old release asset"
-curl -sS --fail -XDELETE "$AUTH" \
+curl -sS -XDELETE "$AUTH" \
   "$GAPI/releases/assets/$(
       <"$LAST_RELEASE_JSON" \
       jq -r '.assets|sort_by(.updated_at)|reverse[]|.id' | tail -n 1
