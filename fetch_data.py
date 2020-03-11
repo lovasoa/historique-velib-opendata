@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import List, Any
 from urllib.request import urlopen
 import logging
+import time
 
 URL = "https://opendata.paris.fr/explore/dataset/" \
       "velib-disponibilite-en-temps-reel/download/?format=json"
@@ -57,6 +58,7 @@ def fetch_dataset() -> List[Any]:
             return list(json.load(urlopen(URL)))
         except Exception as e:
             logging.error(e)
+            time.sleep(30)
 
 
 def main() -> None:
