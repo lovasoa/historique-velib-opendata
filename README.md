@@ -1,5 +1,7 @@
 # historique-velib-opendata
 
+**TODO** La collecte des données a été arrêtée le 9 mars parce que l'API a changé.
+
 Historique des données d'occupation de stations vélib' (publiées en opendata).
 Les données à jour peuvent être téléchargées sur:
 https://github.com/lovasoa/historique-velib-opendata/releases/download/latest/stations.zip
