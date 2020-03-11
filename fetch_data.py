@@ -55,10 +55,13 @@ def fetch_dataset() -> List[Any]:
     """Fetches a velib dataset from the paris opendata API"""
     for _ in range(3):
         try:
-            return list(json.load(urlopen(URL)))
+            points = list(json.load(urlopen(URL)))
+            assert len(points)>0, "No datapoints"
+            return points
         except Exception as e:
             logging.error(e)
             time.sleep(30)
+    raise Exception("Unable to connect to the API") 
 
 
 def main() -> None:
