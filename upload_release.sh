@@ -7,7 +7,7 @@ then
   exit 1
 fi
 
-zip -q --junk-path -r stations.zip stations/*csv
+zip -q -r stations.zip historique_stations.csv
 
 GAPI=https://api.github.com/repos/lovasoa/historique-velib-opendata
 AUTH="-HAuthorization: token $GITHUB_TOKEN"
