@@ -4,77 +4,44 @@ Small script to extract data from the paris opendata velib API
 and save it as CSV files
 """
 
-import json
-from pathlib import Path
-from typing import List, Any
-from urllib.request import urlopen
-import logging
-import time
+import pandas as pd 
+import requests
 
-URL = "https://opendata.paris.fr/explore/dataset/" \
-      "velib-disponibilite-en-temps-reel/download/?format=json"
-KEYS = [
-    'nbbike', 'nbdock', 'nbbikeoverflow', 'nbfreedock',
-    'nbebike', 'nbedock', 'nbebikeoverflow', 'nbfreeedock',
-    'station_state', 'kioskstate', 'maxbikeoverflow', 'creditcard',
-    'station_type', 'overflowactivation', 'station_code', 'overflow',
-    'duedate', 'densitylevel'
-]
-ROOT = Path("./stations")
+def get_stations():
+    sapi="https://velib-metropole-opendata.smoove.pro/opendata/Velib_Metropole/station_information.json"
+    stations_df = pd.DataFrame(requests.get(sapi).json()["data"]["stations"]).astype({"stationCode":int}, inplace=True)
+    stations_df.set_index("stationCode", inplace=True)
+    stations_df.sort_index(inplace=True)
+    stations_df['station_geo'] = ["{:.5f},{:.5f}".format(s.lat,s.lon) for s in stations_df.itertuples()]
+    stations_df['credit_card'] = stations_df.rental_methods.str.contains('CREDITCARD', regex=False).fillna(False)
+    stations_df['station_name'] = stations_df["name"]
+    return stations_df[['station_name', 'capacity', 'station_geo', 'credit_card']]
 
+def get_statuses():
+    sapi = "https://velib-metropole-opendata.smoove.pro/opendata/Velib_Metropole/station_status.json"
+    j = requests.get(sapi).json()["data"]["stations"]
+    df = pd.DataFrame(j)
+    df["last_reported"] = df["last_reported"]
+    df = df.astype({'is_renting':bool, 'stationCode':int,'last_reported':'datetime64[s]'}, inplace=True)
+    df = df.join(df["num_bikes_available_types"].apply(lambda l: pd.Series({**l[0], **l[1]})))
+    df = df[["stationCode", "mechanical", "ebike", "is_renting", "last_reported"]]
+    df.rename({
+        "mechanical": "available_mechanical",
+        "ebike": "available_electrical",
+        "is_renting": "operative",
+        "last_reported": "time",
+    }, axis='columns', inplace=True)
+    df["time"] = pd.Timestamp("now", tz='UTC') # TODO: use last_reported ?
+    df.set_index('time', inplace=True)
+    # df.sort_index(inplace=True)
+    return df
 
-def write_data(dataset: List[Any]) -> None:
-    """Takes a velib dataset and writes it to CSV files"""
+def main():
+    stations_df = get_stations()
+    status_df = get_statuses()
+    print(status_df)
+    df = status_df.merge(stations_df, left_on="stationCode", right_index=True)
+    df = df[["capacity","available_mechanical","available_electrical","station_name","station_geo","operative"]]
+    df.to_csv('historique_stations.csv', header=False, mode='a', date_format='%Y-%m-%dT%H:%MZ')
 
-    for datapoint in dataset:
-        timestamp = str(datapoint.get('record_timestamp', 'NaN'))
-        station = datapoint.get('fields', {})
-        station_name = station.get('station_name', 'unknown')
-        logging.info("Handling station %s", station_name)
-        path = ROOT / (station_name + '.csv')
-        add_header = not path.exists()
-        with path.open('a') as file:
-            if add_header:
-                logging.info("Creating new file: %s", path)
-                headers = ['datetime'] + KEYS
-                file.write(','.join(headers) + '\n')
-            values = [timestamp] + [json.dumps(station.get(k)) for k in KEYS]
-            file.write(','.join(values) + '\n')
-
-
-def write_stations_list(dataset: List[Any]) -> None:
-    """Write the list of stations to a text file"""
-    stations = sorted(set(
-        s.get('fields', {}).get('station_name', 'unknown')
-        for s in dataset
-    ))
-    Path("stations_list.txt").write_text("\n".join(stations))
-
-
-def fetch_dataset() -> List[Any]:
-    """Fetches a velib dataset from the paris opendata API"""
-    for _ in range(3):
-        try:
-            points = list(json.load(urlopen(URL)))
-            assert len(points)>0, "No datapoints"
-            return points
-        except Exception as e:
-            logging.error(e)
-            time.sleep(30)
-    raise Exception("Unable to connect to the API") 
-
-
-def main() -> None:
-    """Launch the data extraction"""
-    logging.basicConfig(format='%(asctime)s %(levelname)-6s %(name)-12s %(message)s', level="INFO")
-    logging.info("Fetching dataset...")
-    fetched = fetch_dataset()
-    logging.info("Fetched %d data points.", len(fetched))
-    write_data(fetched)
-    logging.info("Wrote to CSV files. Writing station summary...")
-    write_stations_list(fetched)
-    logging.info("Done.")
-
-
-if __name__ == '__main__':
-    main()
+main()
