@@ -11,6 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@master
+    - run: pip install -r requirements.txt
     - name: Fetch velib data
       run: ./script.sh
       env:
