@@ -7,7 +7,7 @@ urls=$(curl "$base" | jq -r '.assets|sort_by(.updated_at)|reverse[]|.browser_dow
 outfile=stations.zip
 for url in $urls; do
     wget -nv -O "$outfile" "$url" && \
-    unzip -q -o $outfile && \
+    unzip -o $outfile && \
     break || continue
 done
 
