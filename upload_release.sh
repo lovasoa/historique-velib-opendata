@@ -25,13 +25,12 @@ UPLOAD_URL=$(
 
 echo "Uploading new version"
 NEW_ASSET_ID=$(
-  for i in $(seq 5); do
-    curl -sS --fail "$AUTH" \
+  curl -sS --fail "$AUTH" \
+    --retry 7 --retry-delay 0 \
     -H "Content-Type: application/zip" \
     "$UPLOAD_URL?name=stations-$(date -u +"%Y-%m-%dT%H%MZ").zip" \
-    --data-binary "@stations.zip" \
-    && break || sleep 20;
-  done | jq -r '.id'
+    --data-binary "@stations.zip" |
+  jq -r '.id'
 )
 
 echo "Removing old release asset"
@@ -42,6 +41,6 @@ curl -sS -XDELETE "$AUTH" \
   )"
 
 echo "Renaming asset file"
-curl -sS --fail -XPATCH "$AUTH" \
+curl -sS --fail --retry 7 --retry-delay 0 -XPATCH "$AUTH" \
   "$GAPI/releases/assets/$NEW_ASSET_ID" \
   --data-binary "{\"name\":\"stations.zip\",\"label\":\"Latest data per station as of $(date)\"}"
