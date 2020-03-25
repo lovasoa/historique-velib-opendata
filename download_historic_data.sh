@@ -11,7 +11,7 @@ urls=$(
 
 outfile=stations.zip
 for url in $urls; do
-    curl --fail --retry 8 --retry-delay 0 --output "$outfile" "$url" &&
+    curl --location --fail --retry 8 --retry-delay 0 --output "$outfile" "$url" &&
     unzip -o $outfile &&
     break || continue
 done
